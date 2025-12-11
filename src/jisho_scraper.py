@@ -11,7 +11,7 @@ BASE_URL = "https://jisho.org/search/"
 
 def wordHtmlPages(word):
     writing_url = BASE_URL + word[0]
-    kana_url = BASE_URL + word[1]
+    kana_url = BASE_URL + word[1].split("・")[0]
 
     writing_page = requests.get(writing_url)
     time.sleep(1)
@@ -38,7 +38,7 @@ def scrapeWordBlock(page, word):
 
     for word_block in word_blocks:
         if (word[0] and word[0] in word_block.find("span", class_="text").text
-            or word[1] and word[1] in word_block.text):
+            or word[1].split("・")[0] and word[1].split("・")[0] in word_block.text):
             return word_block
 
     return
