@@ -2,11 +2,11 @@
 
 import flashcard
 import jisho_scraper as jscrape
-import sentence_generator as sgenerator
+from sentence_generator import OpenAISentenceGenerator
+from sentence_generator import PROMPT_HEADER
 from datetime import date
 
 import sys
-import os
 # tts related includes 
 from gtts import gTTS
 
@@ -20,18 +20,18 @@ def main():
     else:
         filename = argv[1]
 
-    print("\njello\n") # I like jello.
+    # print("\njello\n") # I like jello.
 
     vocab = tuple(readWords(filename)) # vocab is a tuple of tuples (kanji, word), (..., ...)
     flashcards = [flashcard.FlashCard(word) for word in vocab if word]
 
     # generate sentences
     gpt_model = "gpt-4o-mini"
-    gpt_client = sgenerator.initGPTClient()
+    generator = OpenAISentenceGenerator(model="gpt-4o-mini")
 
     print("---generating example sentences via chat gpt---")
-    sentences = sgenerator.promptChatGPT(gpt_client, gpt_model, vocab)
-    gpt_client.close()
+
+    sentences = generator.generateSentences(PROMPT_HEADER, vocab)
 
     # scrape definitions
     print("------scraping jisho.org for definitions-------")
@@ -53,7 +53,7 @@ def main():
     # create tsv file
     with open(f"tango_{date.today().strftime('%Y-%m-%d')}.tsv", "w") as outfile:
         for card in flashcards:
-            print(card.tsv_string(), file=outfile)
+            print(card.TSVString, file=outfile)
 
     print("\ntsv file created. Don't forget to add any missing values for\n"
           "definitions that were listed as issues.\n")

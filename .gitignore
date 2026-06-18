@@ -224,3 +224,5 @@ commit_notes.txt
 *.tsv
 program_prompt.txt
 card_file_manager.py
+
+JMdict_e

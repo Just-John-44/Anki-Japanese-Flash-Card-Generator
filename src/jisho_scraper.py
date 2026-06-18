@@ -1,5 +1,6 @@
 # John Wesley Thompson
 # Created: 8/10/2025
+# Last Edited: 6/18/2026
 # jisho_scraper.py
 
 import time
@@ -7,6 +8,15 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://jisho.org/search/"
+
+
+# class JishoScraper:
+#     '''Scrapes jisho.org for definitions of given vocabulary'''
+
+#     def __init__():
+#         pass
+
+#     def
 
 
 def wordHtmlPages(word):

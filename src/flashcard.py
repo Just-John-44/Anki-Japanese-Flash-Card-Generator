@@ -1,24 +1,29 @@
 # John Wesley Thompson
 # Created: 8/9/2025
+# Last Edited: 6/18/20265
 # flashcard.py
 
+from typing import Final
+
+IDEOGRAPHIC_SPACE: Final[str] = "\u3000"
+
 class FlashCard:
-    def __init__(self, word):
-        self.writing = word[0]
-        self.kana = word[1]
+    def __init__(self, word) -> None:
+        self.writing: str = word[0]
+        self.kana: str = word[1]
         self.definition = ""
         self.sentences = ""
         self.word_audio_filepath = ""
         self.sentence_audio_filepath = ""
 
-
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.writing:
-            word = f"{self.writing}\u3000{self.kana}"
+            word = f"{self.writing}{IDEOGRAPHIC_SPACE}{self.kana}"
         else:
             word = f"{self.kana}"
 
-        return ("--------------------\n"
+        return (
+            "--------------------\n"
             f"{word}\n"
             f"{self.definition}\n"
             f"{self.sentences}\n"
@@ -26,9 +31,9 @@ class FlashCard:
             f"{self.sentence_audio_filepath}\n"
             "--------------------\n")
 
-
-    def tsv_string(self):
-        word = f"{self.writing}\u3000{self.kana}" if self.writing else self.kana
+    @property
+    def TSVString(self) -> str:
+        word = f"{self.writing}{IDEOGRAPHIC_SPACE}{self.kana}" if self.writing else self.kana
 
         tsv_string = (f"{word}\t{self.definition}\t"
             f"{self.sentences}\t[sound:{self.word_audio_filepath}]\t"
@@ -36,8 +41,7 @@ class FlashCard:
 
         return tsv_string.replace('\n', "<br>")
 
-
-    def missingFields(self):
+    def isMissingFields(self) -> bool:
         # card can have no kanji if it has kana
         if (self.writing == "" and self.kana == "" or 
             self.kana == "" or
@@ -49,9 +53,8 @@ class FlashCard:
 
         return False
 
-
-    def addPitch(self):
-        pass
+    # def addPitch(self):
+    #     pass
 
 
 if __name__ == "__main__":
