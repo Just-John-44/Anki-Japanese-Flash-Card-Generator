@@ -20,8 +20,6 @@ def main():
     else:
         filename = argv[1]
 
-    # print("\njello\n") # I like jello.
-
     vocab = tuple(readWords(filename)) # vocab is a tuple of tuples (kanji, word), (..., ...)
     flashcards = [flashcard.FlashCard(word) for word in vocab if word]
 
