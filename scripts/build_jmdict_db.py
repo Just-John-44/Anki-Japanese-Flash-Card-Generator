@@ -1,6 +1,6 @@
 # jmdict_db.py
 # Created: 6/18/2026
-# Last Edited: 6/18/2026
+# Last Edited: 6/19/2026
 # Author: John Wesley Thompson
 
 import sqlite3
@@ -14,44 +14,41 @@ XML_PATH = Path("data/JMdict_e")
 db_connection = sqlite3.connect(DB_PATH)
 cursor = db_connection.cursor()
 
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS entries (
-        ent_seq INTEGER PRIMARY KEY
-    );
+cursor.execute(
     """
-)
-cursor.execute("""
     CREATE TABLE IF NOT EXISTS spellings (
-        id INTEGER PRIMARY KEY,
+        spelling_id INTEGER PRIMARY KEY,
         entry_id INTEGER NOT NULL,
-        spelling TEXT NOT NULL,
-        FOREIGN KEY(entry_id) REFERENCES entries(ent_seq)
+        spelling TEXT NOT NULL
     );
     """
 )
-cursor.execute("""
+cursor.execute(
+    """
     CREATE TABLE IF NOT EXISTS readings (
-        id INTEGER PRIMARY KEY,
+        reading_id INTEGER PRIMARY KEY,
         entry_id INTEGER NOT NULL,
-        reading TEXT NOT NULL,
-        FOREIGN KEY(entry_id) REFERENCES entries(ent_seq)
+        reading TEXT NOT NULL
     );
     """
 )
-cursor.execute("""
+
+cursor.execute(
+    """
     CREATE TABLE IF NOT EXISTS senses (
-        id INTEGER PRIMARY KEY,
-        entry_id INTEGER NOT NULL,
-        FOREIGN KEY(entry_id) REFERENCES entries(ent_seq)
+        sense_id INTEGER PRIMARY KEY,
+        entry_id INTEGER NOT NULL
     );
     """
 )
-cursor.execute("""
+cursor.execute(
+    """
     CREATE TABLE IF NOT EXISTS glosses (
-        id INTEGER PRIMARY KEY,
+        gloss_id INTEGER PRIMARY KEY,
+        entry_id INTEGER NOT NULL,
         sense_id INTEGER NOT NULL,
         gloss TEXT NOT NULL,
-        FOREIGN KEY(sense_id) REFERENCES senses(id)
+        FOREIGN KEY(sense_id) REFERENCES senses(sense_id)
     );
     """
 )
@@ -62,41 +59,41 @@ root = tree.getroot()
 db_connection.execute("BEGIN")
 
 for entry in root.findall("entry"):
-    ent_seq = int(entry.findtext("ent_seq"))
+    entry_id = int(entry.findtext("ent_seq"))
 
     # insert entry
-    cursor.execute(
-        "INSERT OR IGNORE INTO entries(ent_seq) VALUES (?)",
-        (ent_seq,)
-    )
+    # cursor.execute(
+    #     "INSERT OR IGNORE INTO entries(entry_id) VALUES (?)",
+    #     (ent_seq,)
+    # )
 
     # insert spelling
     for keb in entry.findall("k_ele/keb"):
         cursor.execute (
-            "INSERT INTO spellings(entry_id, spelling) VALUES (?, ?)",
-            (ent_seq, keb.text)
+            "INSERT INTO spellings (entry_id, spelling) VALUES (?, ?)",
+            (entry_id, keb.text)
         )
 
     # insert readings
     for reb in entry.findall("r_ele/reb"):
         cursor.execute(
-            "INSERT INTO readings(entry_id, reading) VALUES (?, ?)",
-            (ent_seq, reb.text)
+            "INSERT INTO readings (entry_id, reading) VALUES (?, ?)",
+            (entry_id, reb.text)
         )
 
     # establish sense and glosses
     for sense in entry.findall("sense"):
         cursor.execute(
-            "INSERT INTO senses(entry_id) VALUES (?)",
-            (ent_seq,)
+            "INSERT INTO senses (entry_id) VALUES (?)",
+            (entry_id,)
         )
 
         sense_id = cursor.lastrowid
 
         for gloss in sense.findall("gloss"):
             cursor.execute(
-                "INSERT INTO glosses(sense_id, gloss) VALUES (?, ?)",
-                (sense_id, gloss.text)
+                "INSERT INTO glosses (entry_id, sense_id, gloss) VALUES (?, ?, ?)",
+                (entry_id, sense_id, gloss.text)
             )
 
 db_connection.commit()
