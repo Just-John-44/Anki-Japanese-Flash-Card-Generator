@@ -12,6 +12,9 @@ class FakeClient:
     '''Fake OpenAI client used for injection in tests'''
     def chat(self, *args, **kwargs):
         return "fake response"
+    
+    def close(self):
+        pass
 
 
 def test_init_with_injected_client():

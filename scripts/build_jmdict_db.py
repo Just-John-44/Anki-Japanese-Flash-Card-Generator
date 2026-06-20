@@ -14,35 +14,25 @@ XML_PATH = Path("data/JMdict_e")
 db_connection = sqlite3.connect(DB_PATH)
 cursor = db_connection.cursor()
 
-cursor.execute(
+cursor.executescript(
     """
     CREATE TABLE IF NOT EXISTS spellings (
         spelling_id INTEGER PRIMARY KEY,
         entry_id INTEGER NOT NULL,
         spelling TEXT NOT NULL
     );
-    """
-)
-cursor.execute(
-    """
+
     CREATE TABLE IF NOT EXISTS readings (
         reading_id INTEGER PRIMARY KEY,
         entry_id INTEGER NOT NULL,
         reading TEXT NOT NULL
     );
-    """
-)
 
-cursor.execute(
-    """
     CREATE TABLE IF NOT EXISTS senses (
         sense_id INTEGER PRIMARY KEY,
         entry_id INTEGER NOT NULL
     );
-    """
-)
-cursor.execute(
-    """
+
     CREATE TABLE IF NOT EXISTS glosses (
         gloss_id INTEGER PRIMARY KEY,
         entry_id INTEGER NOT NULL,

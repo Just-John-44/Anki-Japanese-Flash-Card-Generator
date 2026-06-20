@@ -1,91 +1,50 @@
 # John Wesley Thompson
 # Created: 8/9/2025
-# Last Edited: 6/18/20265
+# Last Edited: 6/20/2026
 # flashcard.py
 
+from dataclasses import dataclass
 from typing import Final
+from dictionary_entry import DictionaryEntry
 
 IDEOGRAPHIC_SPACE: Final[str] = "\u3000"
 
+@dataclass
 class FlashCard:
-    def __init__(self, word) -> None:
-        self.writing: str = word[0]
-        self.kana: str = word[1]
-        self.definition = ""
-        self.sentences = ""
-        self.word_audio_filepath = ""
-        self.sentence_audio_filepath = ""
-
-    def __repr__(self) -> str:
-        if self.writing:
-            word = f"{self.writing}{IDEOGRAPHIC_SPACE}{self.kana}"
-        else:
-            word = f"{self.kana}"
-
-        return (
-            "--------------------\n"
-            f"{word}\n"
-            f"{self.definition}\n"
-            f"{self.sentences}\n"
-            f"{self.word_audio_filepath}\n"
-            f"{self.sentence_audio_filepath}\n"
-            "--------------------\n")
+    dict_entry = DictionaryEntry()
+    sentences: str = ""
+    reading_audio_path: str = ""
+    sentence_audio_path: str = ""
 
     @property
     def TSVString(self) -> str:
-        word = f"{self.writing}{IDEOGRAPHIC_SPACE}{self.kana}" if self.writing else self.kana
+        if self.dict_entry.spellings:
+            tsv_string = (
+                f"{'・'.join(self.dict_entry.spellings)} | "
+                f"{'・'.join(self.dict_entry.readings)}\t"
+            )
+        else:
+            tsv_string = (
+                f"{'・'.join(self.dict_entry.readings)}\t"
+            )
 
-        tsv_string = (f"{word}\t{self.definition}\t"
-            f"{self.sentences}\t[sound:{self.word_audio_filepath}]\t"
-            f"[sound:{self.sentence_audio_filepath}]")
+        tsv_string += (
+            f"{";\n".join([sense.glosses for sense in self.dict_entry.senses])}\t"
+            f"{self.sentences}\t"
+            f"[sound:{self.word_audio_path}]\t"
+            f"[sound:{self.sentence_audio_path}]"
+        )
 
         return tsv_string.replace('\n', "<br>")
 
     def isMissingFields(self) -> bool:
         # card can have no kanji if it has kana
-        if (self.writing == "" and self.kana == "" or 
-            self.kana == "" or
+        if (self.spelling == "" and self.reading == "" or 
+            self.reading == "" or
             self.definition == "" or
             self.sentences == "" or
-            self.word_audio_filepath == "" or
-            self.sentence_audio_filepath == ""):
+            self.word_audio_path == "" or
+            self.sentence_audio_path == ""):
             return True
 
         return False
-
-    # def addPitch(self):
-    #     pass
-
-
-if __name__ == "__main__":
-
-    both = FlashCard(("図書館", "としょかん"))
-    nokanji = FlashCard(("", "こんにちは"))
-
-
-    print(f"both: \n{both}")
-    print(f"nokanji: \n{nokanji}")
-    print("csv:")
-    print(both.csv_string())
-    print(nokanji.csv_string())
-
-    print(f"'both' missing fields: {both.missingFields()}")
-    print(f"'nokanji' missing fields: {nokanji.missingFields()}")
-
-    both.definition = "library"
-    both.sentences = "これはテストだ"
-    both.audio_filepath = "ttsSounds/notreal/filepath"
-
-    nokanji.definition = "hello"
-    nokanji.sentences = "これもテスト"
-    nokanji.audio_filepath = "ttsSounds/fake/filepath"
-
-    print("with other members")
-    print(f"both: \n{both}")
-    print(f"nokanji: \n{nokanji}")
-    print("csv:")
-    print(both.csv_string())
-    print(nokanji.csv_string())
-
-    print(f"'both' missing fields: {both.missingFields()}")
-    print(f"'nokanji' missing fields: {nokanji.missingFields()}")

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 # createcards
-# Last Edited: 6/19/2026
+# Last Edited: 6/20/2026
 # Author John Wesley Thompson
 
-import flashcard
+from flashcard import FlashCard
 from sentence_generator import OpenAISentenceGenerator
 from sentence_generator import PROMPT_HEADER
 from datetime import date
@@ -14,7 +14,7 @@ import sys
 # tts related includes 
 from gtts import gTTS
 
-from dictionary_entry import DictionaryEntry, Sense
+from dictionary_entry import findEntry 
 
 
 def main():
@@ -26,11 +26,10 @@ def main():
     else:
         filename = argv[1]
 
-    vocab = tuple(readWords(filename)) # vocab is a tuple of tuples (kanji, word), (..., ...)
-    flashcards = [flashcard.FlashCard(word) for word in vocab if word]
+    vocab = readVocabFile(filename)
+    print(vocab)
 
     # generate sentences
-    gpt_model = "gpt-4o-mini"
     generator = OpenAISentenceGenerator(model="gpt-4o-mini")
 
     print("---generating example sentences via chat gpt---")
@@ -49,14 +48,17 @@ def main():
 
     # generate tts audio
     print("-------generating audio with google tts--------")
-    word_filepaths, sentence_filepaths = generateTTSMp3(vocab, sentences)
+    word_audio_paths, sentence_audio_paths = generateTTSMp3(vocab, sentences)
 
     # add data to the flashcards
-    for i in range(len(flashcards)):
-        flashcards[i].sentences = sentences[i]
-        flashcards[i].definition = entries[i].senses[0].glosses
-        flashcards[i].word_audio_filepath = word_filepaths[i]
-        flashcards[i].sentence_audio_filepath = sentence_filepaths[i]
+    flashcards = []
+    for i in range(len(entries)):
+        card = FlashCard()
+        card.dict_entry = entries[i]
+        card.sentences = sentences[i]
+        card.word_audio_path = word_audio_paths[i]
+        card.sentence_audio_path = sentence_audio_paths[i]
+        flashcards.append(card)
 
     # create tsv file
     with open(f"tango_{date.today().strftime('%Y-%m-%d')}.tsv", "w") as outfile:
@@ -65,79 +67,6 @@ def main():
 
     print("\ntsv file created. Don't forget to add any missing values for\n"
           "definitions that were listed as issues.\n")
-
-
-def findEntry(word, cursor):
-    my_entry = DictionaryEntry()
-
-    # find word and assign entry_id
-    if not word[0]:
-        cursor.execute(
-            """
-                SELECT readings.entry_id 
-                FROM readings
-                WHERE readings.reading = ?
-            """,
-            (word[1],)
-        )
-
-    else: 
-        cursor.execute(
-            """
-            SELECT spellings.entry_id 
-            FROM spellings 
-            JOIN readings 
-            ON spellings.entry_id = readings.entry_id 
-            WHERE spellings.spelling = ? AND readings.reading = ?
-            """,
-            (word[0], word[1])
-        )
-    my_entry.entry_id = cursor.fetchone()[0]
-
-    # assign spellings
-    cursor.execute(
-        "SELECT spelling FROM spellings WHERE entry_id = ?",
-        (my_entry.entry_id,)
-    )
-    my_entry.spellings = [x[0] for x in cursor.fetchall()]
-
-    # assign readings
-    cursor.execute(
-        "SELECT reading FROM readings WHERE entry_id = ?",
-        (my_entry.entry_id,)
-    )
-    my_entry.readings = [x[0] for x in cursor.fetchall()]
-
-    # find sense ids
-    cursor.execute(
-        """
-        SELECT sense_id 
-        FROM senses 
-        WHERE senses.entry_id = ?
-        """,
-        (my_entry.entry_id,)
-    )
-    sense_ids = [x[0] for x in cursor.fetchall()]
-
-    # assign sense ids and find and assign glosses to sense objects
-    for id in sense_ids:
-        cursor.execute(
-            """
-            SELECT gloss 
-            FROM glosses 
-            WHERE glosses.sense_id = ?
-            """,
-            (id,)
-        )
-        my_entry.senses.append(Sense(id, ', '.join([x[0] for x in cursor.fetchall()])))
-
-    print(my_entry.entry_id)
-    print(my_entry.spellings)
-    print(my_entry.readings)
-    for sense in my_entry.senses:
-        print(sense.glosses)
-
-    return my_entry
 
 
 def generateTTSMp3(vocab, sentences):
@@ -168,21 +97,29 @@ def generateTTSMp3(vocab, sentences):
     return word_filenames, sentence_filenames
 
 
-def readWords(filename: str):
+def readVocabFile(filename: str):
         if filename.split('.')[1] != "txt" and filename.split('.')[1] != "text":
-            print("file must be a text file")
+            print("input file must be a text file")
             exit(1)
 
         try:
-            infile = open(filename, "r", encoding='utf-8')
-            words = infile.readlines()
-            infile.close()
+            with open(filename, "r", encoding='utf-8') as infile:
+                lines = infile.readlines()
         except FileNotFoundError:
-            print(f"file '{filename}' not found.")
-            exit(1)
+            raise FileNotFoundError(f"file '{filename}' not found.")
 
-        return ([tuple(word.split()) if len(word.split()) == 2 else 
-                 ("", word.strip()) for word in words])
+        for i, line in enumerate(lines):
+            line = line.strip().split()
+
+            if len(line) > 2:
+                raise ValueError(f"line {line} is invalid input. Only 2 fields should be provided")
+
+            elif len(line) == 1:
+                line.insert(0, "")
+
+            lines[i] = tuple(line)
+
+        return lines
 
 
 main()

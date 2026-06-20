@@ -66,6 +66,7 @@ load_dotenv()
 class OpenAISentenceGenerator:
     def __init__(self, client=None, model: str="gpt-4o-mini"):
         self.model = model
+        self.client = client
 
         if client is not None:
             self.client = client
@@ -78,7 +79,8 @@ class OpenAISentenceGenerator:
         self.client = OpenAI(api_key=api_key)
 
     def __del__(self):
-        self.client.close()
+        if self.client is not None:
+            self.client.close()
 
     def generateSentences(self, prompt_header, vocab):
         vocab = ['\u3000'.join(word) if word[0] else word[1] for word in vocab]
