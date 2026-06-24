@@ -36,15 +36,3 @@ class FlashCard:
         )
 
         return tsv_string.replace('\n', "<br>")
-
-    def isMissingFields(self) -> bool:
-        # card can have no kanji if it has kana
-        if (self.spelling == "" and self.reading == "" or 
-            self.reading == "" or
-            self.definition == "" or
-            self.sentences == "" or
-            self.word_audio_path == "" or
-            self.sentence_audio_path == ""):
-            return True
-
-        return False
