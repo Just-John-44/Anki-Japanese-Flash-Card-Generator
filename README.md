@@ -91,20 +91,17 @@ OPENAI_API_KEY="insert your api key here"
 ```
 
 ### Docker
-Create the Docker image with the following command:
+Pull the container and setup the program with the following commands:
 
 ```bash
-docker build -t createcards .
+docker pull justjohn44/createcards:latest
 ```
-
-Create and run the container with the following commands:
 
 ```bash
 # sets up the database for all generate commands
-docker run --rm -it \
--e OPENAI_API_KEY="your api key in quotes" \
+docker run -it \
 -v $(pwd)/data:/app/data \
-createcards setup
+justjohn/createcards:latest setup
 ```
 
 ## **Usage**
@@ -121,12 +118,12 @@ Run the container with the following command:
 
 ```bash
 # Generates a tsv file and mp3 files from the words in example.text
-docker run -it --rm \
+docker run -it \
   -e OPENAI_API_KEY=sk-xxxxx \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/test.txt:/app/test.txt \
   -v $(pwd)/myfile.tsv:/app/myfile.tsv \
-  createcards generate example.text myfile.tsv
+  justjohn44/createcards:latest generate example.text myfile.tsv
 ```
 ### Input & Output
 The expected format for input is a text file containing entries of a word's spelling and a word's reading. If the word doesn't have a spelling, then the reading should only be written once. There should be no case where a spelling exists without a reading, and the program will ask the user to fix any entries that do. Each entry should be on its own line with the spelling and reading separated by whitespace. Empty lines are not allowed. Here is an example:
