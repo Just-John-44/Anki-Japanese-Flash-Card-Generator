@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
 
 # createcards
-# Last Edited: 6/20/2026
-# Author John Wesley Thompson
+# Last Edited: 6/24/2026
+# Author: John Wesley Thompson
 
-from flashcard import FlashCard
-from sentence_generator import OpenAISentenceGenerator
-from sentence_generator import PROMPT_HEADER
+from flashcard import FlashCard, FlashCardService, Word
+from sentence_generator import OpenAISentenceGenerator, PROMPT_HEADER
+
 from datetime import date
 import sqlite3
-
 import sys
-# tts related includes 
-from gtts import gTTS
-
-from dictionary_entry import findEntry 
 
 
 def main():
@@ -29,72 +24,23 @@ def main():
     vocab = readVocabFile(filename)
     print(vocab)
 
-    # generate sentences
-    generator = OpenAISentenceGenerator(model="gpt-4o-mini")
-
-    print("---generating example sentences via chat gpt---")
-    sentences = generator.generateSentences(PROMPT_HEADER, vocab)
-
-    # gather definitions
-    print("------searching database for definitions-------")
+    # FlashCardService setup
     db_conn = sqlite3.connect("data/jmdict.db")
-    cursor = db_conn.cursor()
+    db_conn.row_factory = sqlite3.Row
+    generator = OpenAISentenceGenerator(model="gpt-4o-mini")
+    fc_service = FlashCardService(db_conn, generator)
 
-    entries = []
-    for word in vocab:
-        entries.append(findEntry(word, cursor))
+    flash_cards = fc_service.createFlashCards(vocab)
 
     db_conn.close()
 
-    # generate tts audio
-    print("-------generating audio with google tts--------")
-    word_audio_paths, sentence_audio_paths = generateTTSMp3(vocab, sentences)
-
-    # add data to the flashcards
-    flashcards = []
-    for i in range(len(entries)):
-        card = FlashCard()
-        card.dict_entry = entries[i]
-        card.sentences = sentences[i]
-        card.word_audio_path = word_audio_paths[i]
-        card.sentence_audio_path = sentence_audio_paths[i]
-        flashcards.append(card)
-
     # create tsv file
     with open(f"tango_{date.today().strftime('%Y-%m-%d')}.tsv", "w") as outfile:
-        for card in flashcards:
+        for card in flash_cards:
             print(card.TSVString, file=outfile)
 
     print("\ntsv file created. Don't forget to add any missing values for\n"
           "definitions that were listed as issues.\n")
-
-
-def generateTTSMp3(vocab, sentences):
-    reset_line = "\u001b[2K\r"
-
-    word_filenames = []
-    sentence_filenames = []
-    for word, sentence in zip(vocab, sentences):
-        print(f"{reset_line}Generating tts for {word[0] if word[0] else word[1]}", end="")
-
-        nonempty_word = word[0] if word[0] else word[1]
-
-        word_out_filename = f"{nonempty_word}.mp3"
-        sentence_out_filename = f"{nonempty_word}_sentences.mp3"
-
-        gtts_obj = gTTS(text=nonempty_word, lang='ja', slow=False)
-        gtts_obj.save(word_out_filename)
-
-        sentence = sentence.split("(")[0]
-        gtts_obj = gTTS(text=sentence, lang='ja', slow=False)
-        gtts_obj.save(sentence_out_filename)
-
-        word_filenames.append(word_out_filename)
-        sentence_filenames.append(sentence_out_filename)
-
-    print() # newline for when the "generating tts" prints are complete
-
-    return word_filenames, sentence_filenames
 
 
 def readVocabFile(filename: str):
@@ -117,7 +63,7 @@ def readVocabFile(filename: str):
             elif len(line) == 1:
                 line.insert(0, "")
 
-            lines[i] = tuple(line)
+            lines[i] = Word(line[0], line[1])
 
         return lines
 

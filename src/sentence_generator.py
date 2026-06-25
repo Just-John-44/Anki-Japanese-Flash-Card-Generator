@@ -1,28 +1,14 @@
-# John Wesley Thompson
-# Created: 8/12/2025
-# Last Edited: 6/18/2026
 # sentence_generator.py
+# Created: 8/12/2025
+# Last Edited: 6/24/2026
+# Author: John Wesley Thompson
 
-# import card_file_manager as cfm
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
-# PROMPT_HEADER = '''
-# Hello! I'm going to provide you with a list of words in Japanese.\n
-# For each word, please generate 2 example sentences and tell me the\n
-# formality level of the word. For the formality, I want to know if\n
-# the word is 丁寧語, 尊敬語, casual, etc. Please do this in the\n
-# following format: \n\n
-# 1. word (the second word would be "2. word", and so on)\n
-# sentence 1\n
-# sentence 2\n
-# (formality)\n\n
-# please do not stop generating sentences until you have made them\n
-# for every word. I'm certain that this is the desired format.\n\n
-# Here is the list, and thank you!:\n
-# '''
+
 PROMPT_HEADER = '''
 I'm going to provide you a list of words in Japanese.\n
 For each word, please generate 2 example sentences and if applicable,
@@ -59,9 +45,11 @@ please do so in the following json format:\n
     },
     "word..."
 ]
+
 '''
 
 load_dotenv()
+
 
 class OpenAISentenceGenerator:
     def __init__(self, client=None, model: str="gpt-4o-mini"):
@@ -101,23 +89,10 @@ class OpenAISentenceGenerator:
         )
 
         response_text = chat_completion.choices[0].message.content
-
         data = json.loads(response_text)
 
-        # this makes a list of strings of 2 example sentences
         new_sentences = []
         for word, entry in data.items():
             new_sentences.append(entry["s1"] + ' ' + entry["s2"])
 
         return new_sentences
-
-
-if __name__ == "__main__":
-
-    gen = OpenAISentenceGenerator()
-    # cfm.initConfigFile()
-    # file_manager = cfm.CardFileManager()
-    # model = file_manager.getConfig("OPENAI_MODEL")
-
-    vocab = (("図書館", "としょかん"), ("割り勘", "わりかん"), ("", "テスト"))
-    gen.generateSentences(PROMPT_HEADER, vocab)
