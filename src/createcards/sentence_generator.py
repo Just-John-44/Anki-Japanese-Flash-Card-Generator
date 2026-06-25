@@ -3,7 +3,7 @@
 # Last Edited: 6/25/2026
 # Author: John Wesley Thompson
 
-from flash_card import Word
+from createcards.flash_card import Word
 
 import json
 from openai import OpenAI

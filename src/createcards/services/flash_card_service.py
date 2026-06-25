@@ -3,8 +3,8 @@
 # Last Edited: 6/25/2026
 # Author: John Wesley Thompson
 
-from flash_card import FlashCard, Sense, Word
-from sentence_generator import OpenAISentenceGenerator
+from createcards.flash_card import FlashCard, Sense, Word
+from createcards.sentence_generator import OpenAISentenceGenerator
 
 import json
 from gtts import gTTS

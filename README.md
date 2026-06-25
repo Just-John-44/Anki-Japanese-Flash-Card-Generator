@@ -1,97 +1,160 @@
-# Anki Flash Card Maker
-A program that creates a tsv file and mp3 files ready to be imported into an Anki deck.
+# Anki Japanese Flash Card Generator
+A CLI tool that generates TSV files, vocabulary audio, and example sentence audio for import into Anki. Built to automate manual Anki card creation and to support intense vocabulary study workflows. (Future versions will support apkg creation)
 
-## **About the Project**
----
-This project was created to help me create Anki flashcards faster than I could by manually inputting the data. It scrapes jisho.org for card definitions, prompts chat gpt for 2 example sentences, and uses Google text-to-speech for sentence and word audio. It's written entirely in Pyhton, and uses the beautifulsoup, requests, openai, and gtts libraries.
-<br><br>
+### Bookmarks
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Installation & Setup](#installation--setup)
+- [Usage](#usage)
+- [Technical Decisions](#design-decisions)
+- [Future Improvements](#future-improvements)
 
-<!-- put icons of language usage here and links to the libraries used. basically the tech stack-->
+## **Features**
+- Provides easily usable CLI interface for generating cards
+- Generates TSV files ready for Anki import
+- Automatically gathers dictionary definitions from JMdict (same data jisho.org uses)
+- Generates example sentences using the OpenAI API
+- Produces audio for vocabulary and example sentences
+- Uses a local SQLite database for fast dictionary lookups
+- Supports both standard Python and Docker workflows
+
+### Overview
+```text
+Input:
+
+単語 たんご
+言葉 ことば
+語彙 ごい
+リンゴ
+
+Command:
+createcards generate input.txt output.tsv
+
+Output:
+- output.tsv
+- word audio files
+- sentence audio files
+```
+
+## **Tech Stack**
 <img align="left" height="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" />
-<img align="left" height="40px" src="attachments/openai.png"/>
+<img align="left" height="35px" src="attachments/openai.png"/>
 <img align="left" height="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original.svg" />
 <img align="left" height="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/docker/docker-original-wordmark.svg" />
 
 <br><br>
 
+Languages: Python, SQLite
 
-## **Features**
----
-+ AI-generated sentences for each word
-+ gTTS for each word and sentence
-+ Word definitions stright from jisho.org
+APIs: gTTS (Google Text-to-Speech), OpenAI API
 
-## **Requirements and Build**
----
+DevOps: Docker
 
-### **macOS/Linux:**
-All dependencies are listed in requirements.txt. Do the following to get them downloaded:
+## Architecture
+The application is organized into several stages:
 
+1. **Input Processing**
+    - Reads user-provided text file
+    - Validates file formats and command-line arguments
+
+2. **Data Gathering**
+    - SQLite reading, spelling, and definition lookups
+    - OpenAI sentence generation
+    - Google TTS generates audio for words and sentences
+
+3. **Card Compilation**
+    - Creates a list of flash card objects with previously gathered data
+
+4. **Output**
+    - Each flash card is represented in its tsv format
+    - Creates final tsv file for flash cards
+
+## **Installation & Setup**
+
+### Standard Install
+Download it straight from git using pip:
 ```bash
-pip install -r requirements.txt
+pip install git+https://github.com/Just-John-44/Anki-Japanese-Flash-Card-Generator.git
 ```
 
-Add your openai api key to your system environment. In your shell config, add this line:
-
+Create the SQLite database for card generation with this command:
 ```bash
-export OPENAI_API_KEY="insert your api key here"
+# ! This will download a large dictionary file as an intermediate step via ftp.
+createcards setup
 ```
 
-### **Docker:**
-To create and run a docker container, do the following to build the the image:
+Next, add your OpenAI API key to your system environment as the following variable:
 
 ```bash
-docker build -t your-image-name build/directory/here
+OPENAI_API_KEY="insert your api key here"
 ```
 
-Next, create and run the container with the following command:
+### Docker
+Create the Docker image with the following command:
 
 ```bash
+docker build -t createcards .
+```
+
+Create and run the container with the following commands:
+
+```bash
+# sets up the database for all generate commands
 docker run --rm -it \
 -e OPENAI_API_KEY="your api key in quotes" \
--v /directory/to/run/the/container:/app your-image-name /app/your_vocab_input_file.txt
+-v $(pwd)/data:/app/data \
+createcards setup
 ```
 
-- `--rm` deletes the container after its done running
-- `-e` specifies the environment vaariables needed for the program
-- `-v` mounts your filepath to the filepath in the container
+## **Usage**
 
+### For Standard Install
+The createcards script takes two possible commands, one of which you have already run (`setup`). The other command is `generate` and it takes a text (.text or .txt) file and a tsv file as arguments. This is how it's used:
 
-## **How to Use**
----
-To use the program after the set up steps, move to the directory that you want to create your flashcard tsv and media files in. I have my directory structure set up like so:
 ```bash
-mainVocabDirectory
-├── vocabDirectoryWithDate
-│   └── todays_date_words.txt
-└── tango_2025-10-10
-    └── tango_2025-10-10.txt
+createcards generate inputfile.txt outputfile.tsv
 ```
-In your directory, you should have `.txt` a file with a list of words. The format is one word per line, with the word's kanji first and its kana second, separated by a widespace character like so:
+
+### For Docker Container
+Run the container with the following command:
+
 ```bash
-言葉　ことば
-単語　たんご
-語彙　ごい
-```
-If the word doesn't have kanji, you should only write its kana on that line (no widespaces).
-
-Once you've moved to your directory that has your vocab list, run the script:
-```bash
-createcards mv_vocab_list.txt
-```
-
-The program will run, displaying what step it is on during the card making process, and will notify you if there are any issues finding definitions. The web scraper is not perfect, and you will have to enter the definitions manually for the ones that it can not find.
-
-Your current directory will have a new tsv file and mp3 files for all of the words on your list. The only thing left to do now is to import them. All of your mp3 files need to be moved to Anki's collection.media folder before you import your tsv file. Find it, and copy or move your mp3 files into it. Lastly, import your tsv file into the Anki app and your done!
-
-
-docker run -it --rm \
-  -v $(pwd)/data:/app/data \
-  createcards setup
-
+# Generates a tsv file and mp3 files from the words in example.text
 docker run -it --rm \
   -e OPENAI_API_KEY=sk-xxxxx \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/test.txt:/app/test.txt \
   -v $(pwd)/myfile.tsv:/app/myfile.tsv \
-  createcards generate test.txt myfile.tsv
+  createcards generate example.text myfile.tsv
+```
+### Input & Output
+The expected format for input is a text file containing entries of a word's spelling and a word's reading. If the word doesn't have a spelling, then the reading should only be written once. There should be no case where a spelling exists without a reading, and the program will ask the user to fix any entries that do. Each entry should be on its own line with the spelling and reading separated by whitespace. Empty lines are not allowed. Here is an example:
+
+**inputfile.txt**
+```
+単語　たんご
+言葉　ことば
+語彙　ごい
+リンゴ
+```
+
+After the `generate` command is run, the createcards will display on the terminal what its current process is, and it will generate a tsv file and two mp3 files for each entry in inputfile.txt. One for sentences and one for the word itself. After that, they can be imported into anki and used to populate any kind of note that the user likes.
+
+## **Technical Decisions**
+- With storage and efficiency in mind, createcards is designed with a SQLite database that is created once during setup. The files that the database are built from are quite large, so they're deleted after the database is built to save storage.
+
+- Data is gathered from multiple sources, so the service classes FlashCardService and SetupService were implemented as a separate layer to handle data flow. This solved the "Who handles this data?", and class dependency issues that were apparent beforehand and enforced better separation of concerns.
+
+## **Future Improvements**
+Though the program is functional as is, I would like to add the following features to improve user experience:
+
+- Addition of command line arguments and a personal config that allow the user to specify what data they want inlcuded in their flash cards
+
+- Implementation of the genanki Python module to bundle flash card data and audio files into a single package, using Anki's native structure
+
+- Usage of the tags that the OpenAI client generate for cards (at the moment, they are discarded)
+
+<br>
+
+[Back to top](#anki-flash-card-generator)

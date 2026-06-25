@@ -2,10 +2,10 @@
 # Last Edited: 6/25/2026
 # Author: John Wesley Thompson
 
-from flash_card import FlashCard, Word
-from sentence_generator import OpenAISentenceGenerator
-from services.setup_service import SetupService
-from services.flash_card_service import FlashCardService
+from createcards.flash_card import FlashCard, Word
+from createcards.sentence_generator import OpenAISentenceGenerator
+from createcards.services.setup_service import SetupService
+from createcards.services.flash_card_service import FlashCardService
 
 import sqlite3
 from pathlib import Path
