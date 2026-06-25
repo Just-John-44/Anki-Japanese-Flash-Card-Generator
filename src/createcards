@@ -6,23 +6,34 @@
 
 from flashcard import FlashCard, FlashCardService, Word
 from sentence_generator import OpenAISentenceGenerator, PROMPT_HEADER
+from services.setup_service import SetupService
 
 from datetime import date
 import sqlite3
-import sys
+# import sys
 from pathlib import Path
+import argparse
 
 
 def main():
 
-    argv = sys.argv
-    if len(argv) != 2:
-        print("usage: createcards 'filename.txt'")
-        exit(1)
-    else:
-        filename = argv[1]
+    cli_parser = argparse.ArgumentParser()
+    cli_subparsers = cli_parser.add_subparsers(dest="command")
 
-    vocab = readVocabFile(filename)
+    cli_setup_parser = cli_subparsers.add_parser("setup")
+
+    cli_generate_parser = cli_subparsers.add_parser("generate")
+    cli_generate_parser.add_argument("input_file", type=text_file)
+    cli_generate_parser.add_argument("output_file", type=apkg_file)
+
+    args = cli_parser.parse_args()
+
+    if args.command == "setup":
+        setup_service = SetupService()
+        setup_service.run()
+        return
+
+    vocab = readVocabFile(args.input_file)
     print(vocab)
 
     # FlashCardService setup
@@ -36,9 +47,9 @@ def main():
     db_conn.close()
 
     # create tsv file
-    with open(f"tango_{date.today().strftime('%Y-%m-%d')}.tsv", "w") as outfile:
+    with open(args.output_file, "w") as deck_file:
         for card in flash_cards:
-            print(card.TSVString, file=outfile)
+            print(card.TSVString, file=deck_file)
 
     print("\ntsv file created. Don't forget to add any missing values for\n"
           "definitions that were listed as issues. Possible reasons for\n"
@@ -50,15 +61,28 @@ def main():
     )
 
 
-def readVocabFile(filename: str):
+def text_file(path_str: str) -> Path:
+    path = Path(path_str)
 
-        path = Path(filename)
-        if path.suffix != ".txt" and path.suffix != ".text":
-            raise ValueError("Input file must be a text file.")
+    if path.suffix != ".txt" and path.suffix != ".text":
+        raise argparse.ArgumentTypeError("Input file must be a text file.")
 
+    return path
+
+
+def apkg_file(path_str: str) -> Path:
+    path = Path(path_str)
+
+    if path.suffix != ".apkg":
+        raise argparse.ArgumentTypeError("Output file must be an apkg file.")
+
+    return path
+
+
+def readVocabFile(filename: Path):
         try:
-            with open(filename, "r", encoding='utf-8') as infile:
-                lines = infile.readlines()
+            with open(filename, "r", encoding='utf-8') as vocab_file:
+                lines = vocab_file.readlines()
 
         except FileNotFoundError:
             raise FileNotFoundError(f"file '{filename}' not found.")

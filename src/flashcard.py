@@ -76,7 +76,7 @@ class Sense:
     # a sense may contain more information in the future like part of 
     # speech or a context that the sense is used in
 
-class FlashCardService():
+class FlashCardService:
 
     def __init__(self, db_conn, sentence_generator):
         self.db_conn = db_conn
@@ -135,6 +135,7 @@ class FlashCardService():
                 entry_ids.append(None)
                 spellings.append([])
                 readings.append([])
+                senses.append([])
                 print(f"-!!!-No entry found for {word.spelling or word.reading}-----")
                 continue
 
@@ -213,6 +214,14 @@ class FlashCardService():
 
             word_audio_paths.append(word_audio_path)
             sentence_audio_paths.append(sentence_audio_path)
+
+        print(len(entry_ids))
+        print(len(spellings))
+        print(len(readings))
+        print(len(senses))
+        print(len(sentences))
+        print(len(word_audio_paths))
+        print(len(sentence_audio_paths))
 
         flash_cards = [
             FlashCard(*values) for values in zip(
