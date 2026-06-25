@@ -10,6 +10,7 @@ from sentence_generator import OpenAISentenceGenerator, PROMPT_HEADER
 from datetime import date
 import sqlite3
 import sys
+from pathlib import Path
 
 
 def main():
@@ -40,17 +41,25 @@ def main():
             print(card.TSVString, file=outfile)
 
     print("\ntsv file created. Don't forget to add any missing values for\n"
-          "definitions that were listed as issues.\n")
+          "definitions that were listed as issues. Possible reasons for\n"
+          "issues:\n"
+          "\n"
+          "- Provided a spelling for a word but no reading\n"
+          "    example: 猫 (not followed by a space and ねこ)\n"
+          "- Provided a word that is not in the database or is misspelled\n"
+    )
 
 
 def readVocabFile(filename: str):
-        if filename.split('.')[1] != "txt" and filename.split('.')[1] != "text":
-            print("input file must be a text file")
-            exit(1)
+
+        path = Path(filename)
+        if path.suffix != ".txt" and path.suffix != ".text":
+            raise ValueError("Input file must be a text file.")
 
         try:
             with open(filename, "r", encoding='utf-8') as infile:
                 lines = infile.readlines()
+
         except FileNotFoundError:
             raise FileNotFoundError(f"file '{filename}' not found.")
 

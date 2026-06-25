@@ -6,7 +6,7 @@
 from dataclasses import dataclass
 from typing import Final, NamedTuple
 from sentence_generator import OpenAISentenceGenerator
-from sentence_generator import PROMPT_HEADER, FOR_ONE_PROMPT_HEADER
+from sentence_generator import PROMPT_HEADER
 
 from gtts import gTTS
 import json
@@ -133,8 +133,9 @@ class FlashCardService():
             row = self.db_cursor.fetchone()
             if row is None:
                 entry_ids.append(None)
-                spellings.append(None)
-                readings.append(None)
+                spellings.append([])
+                readings.append([])
+                print(f"-!!!-No entry found for {word.spelling or word.reading}-----")
                 continue
 
             # In the case the user enters an ambiguous vocab word, the first 
