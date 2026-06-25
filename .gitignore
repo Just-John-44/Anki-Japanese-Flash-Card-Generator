@@ -218,14 +218,11 @@ oldVersion
 ttsAudio*
 
 # misc
-design.txt
-commit_notes.txt
 *.mp3
 *.tsv
-program_prompt.txt
-card_file_manager.py
+*.apkg
 
 JMdict_e
-data/*
+
 obsolete/*
-*.apkg
+data/*

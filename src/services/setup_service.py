@@ -1,6 +1,6 @@
 # setup_service.py
 # Created: 6/24/2026
-# Last Edited: 6/24/2026
+# Last Edited: 6/25/2026
 # Author: John Wesley Thompson
 
 import gzip
@@ -15,12 +15,13 @@ DICT_XML_PATH = Path("data/JMdict_e.xml")
 
 
 class SetupService:
+
     def run(self):
         self._downloadJMdict()
         self._buildDatabase()
 
-        # DICT_GZ_PATH.unlink()
-        # DICT_XML_PATH.unlink()
+        DICT_GZ_PATH.unlink()
+        DICT_XML_PATH.unlink()
 
     def _downloadJMdict(self):
         print("Downloading JMdict...")

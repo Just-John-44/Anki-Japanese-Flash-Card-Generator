@@ -7,10 +7,11 @@ This project was created to help me create Anki flashcards faster than I could b
 <br><br>
 
 <!-- put icons of language usage here and links to the libraries used. basically the tech stack-->
-<img align="left" height="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" />
-<img align="left" height="40" src="attachments/beautifulsoup.png"/>
-<img align="left" height="40" src="attachments/openai.png"/>
-<img align="left" height="40" src="attachments/requests.png"/>
+<img align="left" height="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" />
+<img align="left" height="40px" src="attachments/openai.png"/>
+<img align="left" height="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original.svg" />
+<img align="left" height="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/docker/docker-original-wordmark.svg" />
+
 <br><br>
 
 
@@ -18,7 +19,7 @@ This project was created to help me create Anki flashcards faster than I could b
 ---
 + AI-generated sentences for each word
 + gTTS for each word and sentence
-+ Word definitions stright from jisho.org 
++ Word definitions stright from jisho.org
 
 ## **Requirements and Build**
 ---
@@ -83,3 +84,14 @@ The program will run, displaying what step it is on during the card making proce
 
 Your current directory will have a new tsv file and mp3 files for all of the words on your list. The only thing left to do now is to import them. All of your mp3 files need to be moved to Anki's collection.media folder before you import your tsv file. Find it, and copy or move your mp3 files into it. Lastly, import your tsv file into the Anki app and your done!
 
+
+docker run -it --rm \
+  -v $(pwd)/data:/app/data \
+  createcards setup
+
+docker run -it --rm \
+  -e OPENAI_API_KEY=sk-xxxxx \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/test.txt:/app/test.txt \
+  -v $(pwd)/myfile.tsv:/app/myfile.tsv \
+  createcards generate test.txt myfile.tsv

@@ -1,0 +1,10 @@
+[project]
+name = "createcards"
+version = "0.1.0"
+
+[project.scripts]
+createcards = "cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

@@ -2,9 +2,11 @@ FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
-COPY ./src src/
-COPY ./requirements.txt .
-
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["./src/createcards"]
+COPY . .
+
+RUN pip install -e .
+
+ENTRYPOINT ["createcards"]

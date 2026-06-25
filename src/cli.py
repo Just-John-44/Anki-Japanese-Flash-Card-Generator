@@ -1,40 +1,34 @@
-#!/usr/bin/env python3
-
-# createcards
-# Last Edited: 6/24/2026
+# createcards.py
+# Last Edited: 6/25/2026
 # Author: John Wesley Thompson
 
-from flashcard import FlashCard, FlashCardService, Word
-from sentence_generator import OpenAISentenceGenerator, PROMPT_HEADER
+from flash_card import FlashCard, Word
+from sentence_generator import OpenAISentenceGenerator
 from services.setup_service import SetupService
+from services.flash_card_service import FlashCardService
 
-from datetime import date
 import sqlite3
-# import sys
 from pathlib import Path
 import argparse
+import sys
 
 
 def main():
-
-    cli_parser = argparse.ArgumentParser()
-    cli_subparsers = cli_parser.add_subparsers(dest="command")
-
-    cli_setup_parser = cli_subparsers.add_parser("setup")
-
-    cli_generate_parser = cli_subparsers.add_parser("generate")
-    cli_generate_parser.add_argument("input_file", type=text_file)
-    cli_generate_parser.add_argument("output_file", type=apkg_file)
-
-    args = cli_parser.parse_args()
+    args = parse_cli_args()
 
     if args.command == "setup":
-        setup_service = SetupService()
-        setup_service.run()
+        SetupService().run()
         return
 
-    vocab = readVocabFile(args.input_file)
-    print(vocab)
+    if not Path("data/jmdict.db").is_file():
+        print("Database not found. Run 'createcards setup' to set up the database.")
+        sys.exit(1)
+
+    try:
+        vocab = read_vocab_file(args.input_file)
+    except (FileNotFoundError, ValueError) as e:
+        print(e)
+        sys.exit(1)
 
     # FlashCardService setup
     db_conn = sqlite3.connect("data/jmdict.db")
@@ -42,14 +36,14 @@ def main():
     generator = OpenAISentenceGenerator(model="gpt-4o-mini")
     fc_service = FlashCardService(db_conn, generator)
 
-    flash_cards = fc_service.createFlashCards(vocab)
+    flash_cards = fc_service.create_flash_cards(vocab)
 
     db_conn.close()
 
     # create tsv file
     with open(args.output_file, "w") as deck_file:
         for card in flash_cards:
-            print(card.TSVString, file=deck_file)
+            print(card.tsv_string, file=deck_file)
 
     print("\ntsv file created. Don't forget to add any missing values for\n"
           "definitions that were listed as issues. Possible reasons for\n"
@@ -70,18 +64,40 @@ def text_file(path_str: str) -> Path:
     return path
 
 
-def apkg_file(path_str: str) -> Path:
+# def apkg_file(path_str: str) -> Path:
+#     path = Path(path_str)
+
+#     if path.suffix != ".apkg":
+#         raise argparse.ArgumentTypeError("Output file must be an apkg file.")
+
+#     return path
+
+def tsv_file(path_str: str) -> Path:
     path = Path(path_str)
 
-    if path.suffix != ".apkg":
-        raise argparse.ArgumentTypeError("Output file must be an apkg file.")
+    if path.suffix != ".tsv":
+        raise argparse.ArgumentTypeError("Output file must me a tsv file.")
 
     return path
 
 
-def readVocabFile(filename: Path):
+def parse_cli_args() -> argparse.Namespace:
+    cli_parser = argparse.ArgumentParser()
+    cli_subparsers = cli_parser.add_subparsers(dest="command", required=True)
+
+    cli_setup_parser = cli_subparsers.add_parser("setup")
+
+    cli_generate_parser = cli_subparsers.add_parser("generate")
+    cli_generate_parser.add_argument("input_file", type=text_file)
+    cli_generate_parser.add_argument("output_file", type=tsv_file)
+
+    return cli_parser.parse_args()
+
+
+
+def read_vocab_file(filename: Path) -> list[Word]:
         try:
-            with open(filename, "r", encoding='utf-8') as vocab_file:
+            with filename.open("r", encoding='utf-8') as vocab_file:
                 lines = vocab_file.readlines()
 
         except FileNotFoundError:
@@ -101,4 +117,5 @@ def readVocabFile(filename: Path):
         return lines
 
 
-main()
+if __name__ == "__main__":
+    main()

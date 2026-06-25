@@ -1,8 +1,6 @@
 .git*
 __pycache__
-ttsAudio*
-tango*
-program_prompt.txt
-oldVersion
+obsolete
 attachments
-card_file_manager.py
+*.tsv
+*.mp3

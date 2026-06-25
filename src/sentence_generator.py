@@ -1,7 +1,9 @@
 # sentence_generator.py
 # Created: 8/12/2025
-# Last Edited: 6/24/2026
+# Last Edited: 6/25/2026
 # Author: John Wesley Thompson
+
+from flash_card import Word
 
 import json
 from openai import OpenAI
@@ -10,7 +12,7 @@ import os
 
 
 PROMPT_HEADER = '''
-I'm going to provide you a list of words in Japanese.\n
+I'm going to provide you a list of words in Japanese.
 For each word, please generate 2 example sentences and if applicable,
 tell me if the word belongs to any of the following categories/tags:
 
@@ -31,8 +33,13 @@ Situational:
 Mostly Spoken, Mostly Written, Conversational, Public Speaking, Customer Service,
 Email, Texting, Telephone, Workplace, Classroom
 
-please do so in the following json format:\n
-[
+please do so in the following json format:
+
+Use the exact input word as the JSON key.
+Do not normalize, modify, reorder, or omit any words.
+Return one object entry for every word provided.
+
+{
     "word1": {
         "s1": "insert first generated sentence here for word 1.",
         "s2": "insert second generated sentence here for word 1.",
@@ -43,16 +50,19 @@ please do so in the following json format:\n
         ...
         ...
     },
-    "word..."
-]
+    ...
+}
 
 '''
 
 load_dotenv()
 
-
 class OpenAISentenceGenerator:
-    def __init__(self, client=None, model: str="gpt-4o-mini"):
+    def __init__(
+        self, 
+        client=None, 
+        model: str="gpt-4o-mini"
+    ):
         self.model = model
         self.client = client
 
@@ -66,15 +76,11 @@ class OpenAISentenceGenerator:
 
         self.client = OpenAI(api_key=api_key)
 
-    def __del__(self):
-        if self.client is not None:
-            self.client.close()
+    def generate_sentences(self, vocab: list[Word]) -> list[str]:
+        vocab_strings = ['\u3000'.join(word) if word[0] else word[1] for word in vocab]
+        vocab_text = '\n'.join(vocab_strings)
 
-    def generateSentences(self, prompt_header, vocab):
-        vocab = ['\u3000'.join(word) if word[0] else word[1] for word in vocab]
-        vocab_text = '\n'.join(vocab)
-
-        full_prompt = prompt_header + vocab_text
+        full_prompt = PROMPT_HEADER + "\n\n" + vocab_text
         chat_completion = self.client.chat.completions.create(
             model = self.model,
             messages = [
@@ -89,10 +95,15 @@ class OpenAISentenceGenerator:
         )
 
         response_text = chat_completion.choices[0].message.content
-        data = json.loads(response_text)
 
-        new_sentences = []
-        for word, entry in data.items():
-            new_sentences.append(entry["s1"] + ' ' + entry["s2"])
+        try:
+            data = json.loads(response_text)
+        except json.JSONDecodeError:
+            raise ValueError("OpenAI returned an invalid response.")
 
-        return new_sentences
+        sentences = []
+        for word in vocab_strings:
+            entry = data[word]
+            sentences.append(entry["s1"] + ' ' + entry["s2"])
+
+        return sentences
