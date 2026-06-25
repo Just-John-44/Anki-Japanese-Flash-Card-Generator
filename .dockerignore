@@ -4,3 +4,4 @@ obsolete
 attachments
 *.tsv
 *.mp3
+.env
